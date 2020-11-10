@@ -1,5 +1,5 @@
 <?php
-namespace PM1 {
+namespace GarryDzeng\PM1 {
 
   define('PM1_INT', 1);
   define('PM1_DOUBLE', 2);
@@ -24,7 +24,7 @@ namespace PM1 {
     ];
   }
 
-  function read(array &$stream, &$previous = null) : ?string {
+  function read(array &$stream, $whitespace = false, &$previous = null) : ?string {
 
     [
       'value'=> &$value,
@@ -38,12 +38,15 @@ namespace PM1 {
       // previous character whatever its visible character or whitespace
       $previous = @$value[$index - 2];
 
-      // skip whitespace
+      // consume a character whatever if toggle on
+      // or skip whitespace
       if (
-        $token !== "\x20" && // White Space
-        $token !== "\x0a" && // New Line
-        $token !== "\x0d" && // Carriage Return
-        $token !== "\x09"    // Tabs
+        $whitespace || (
+          $token !== "\x20" && // White Space
+          $token !== "\x0a" && // New Line
+          $token !== "\x0d" && // Carriage Return
+          $token !== "\x09"    // Tabs
+        )
       )
       {
         return $token;
@@ -53,22 +56,6 @@ namespace PM1 {
     return null;
   }
 
-  function is_start_numeric($token) {
-    return
-      $token == "\x2d" || // -
-      $token == "\x30" || // 0
-      $token == "\x31" || // 1
-      $token == "\x32" || // 2
-      $token == "\x33" || // 3
-      $token == "\x34" || // 4
-      $token == "\x35" || // 5
-      $token == "\x36" || // 6
-      $token == "\x37" || // 7
-      $token == "\x38" || // 8
-      $token == "\x39"    // 9
-    ;
-  }
-
   function as_double(array &$stream) {
 
     $start = read($stream);
@@ -76,7 +63,20 @@ namespace PM1 {
     // Digit
     // Negative Sign
     // Zero
-    if (!is_start_numeric($start)) {
+    if (!(
+      $start == "\x2d" || // -
+      $start == "\x30" || // 0
+      $start == "\x31" || // 1
+      $start == "\x32" || // 2
+      $start == "\x33" || // 3
+      $start == "\x34" || // 4
+      $start == "\x35" || // 5
+      $start == "\x36" || // 6
+      $start == "\x37" || // 7
+      $start == "\x38" || // 8
+      $start == "\x39"    // 9
+    ))
+    {
       return null;
     }
 
@@ -129,7 +129,20 @@ namespace PM1 {
 
     $start = read($stream);
 
-    if (!is_start_numeric($start)) {
+    if (!(
+      $start == "\x2d" || // -
+      $start == "\x30" || // 0
+      $start == "\x31" || // 1
+      $start == "\x32" || // 2
+      $start == "\x33" || // 3
+      $start == "\x34" || // 4
+      $start == "\x35" || // 5
+      $start == "\x36" || // 6
+      $start == "\x37" || // 7
+      $start == "\x38" || // 8
+      $start == "\x39"    // 9
+    ))
+    {
       return null;
     }
 
@@ -556,9 +569,8 @@ namespace PM1 {
 
     $pattern = null;
 
-    // regular expression ->
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
-    while (($token = read($stream, $previous)) != null && ('/' != $token || '\\' == $previous)) {
+    while (($token = read($stream, true, $previous)) != null && ('/' != $token || '\\' == $previous)) {
       $pattern .= $token;
     }
 

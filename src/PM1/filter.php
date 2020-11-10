@@ -1,10 +1,34 @@
 <?php
-namespace PM1 {
+namespace GarryDzeng\PM1 {
 
   use InvalidArgumentException;
+  use Throwable;
 
   class ValidateException extends Exception {
 
+    public $validator;
+    public $depth;
+
+    public function __construct($validator, array $depth, Throwable $previous = null) {
+
+      $this->validator = $validator;
+      $this->depth = $depth;
+
+      $s = implode('.', $depth);
+
+      $message = <<<Message
+        Validate data failed,
+        it (depth: ) doesn't fulfill declared rule: ,
+        
+        please check!
+        Message;
+
+      parent::__construct(
+        $message,
+        0x00,
+        $previous
+      );
+    }
   }
 
   function check_object($struct, $data, $depth = []) : array {
@@ -33,9 +57,9 @@ namespace PM1 {
       ] = $data;
 
       // Execute validation logic if property isn't empty
-      // whatever it optional
+      // whatever its optional
       if (isset($value)) {
-        [0 => $success, 1 => $extra] = check_value($struct, $value, [...$depth, $name]);
+        [ $success, $extra ] = check_value($struct, $value, [...$depth, $name]);
       }
 
       $success = $optional ? null === $value : $success;
@@ -84,11 +108,14 @@ namespace PM1 {
 
         default: {
 
-          [$child, $composed] = $struct;
+          [
+            'definition'=> $definition,
+            'body'=> $body,
+          ] = $struct;
 
-          switch ($child) {
-            case PM1_ENUMERATION: [$success, $extra] = check_enumeration($composed, $value, [...$depth, $index]); break;
-            case PM1_OBJECT: [$success, $extra] = check_object($composed, $value, [...$depth, $index]); break;
+          switch ($definition) {
+            case PM1_ENUMERATION: [$success, $extra] = check_enumeration($body, $value, [...$depth, $index]); break;
+            case PM1_OBJECT: [$success, $extra] = check_object($body, $value, [...$depth, $index]); break;
             default: {
               throw new InvalidArgumentException(
 
@@ -133,9 +160,11 @@ namespace PM1 {
   function check_range($struct, $data, $depth = []) : array {
 
     [
-      'lower_bound'=> $minimal,
       'keyword'=> $keyword,
-      'upper_bound'=> $maximal,
+      'bound'=> [
+        'minimal'=> $minimal,
+        'maximal'=> $maximal,
+      ]
     ] = $struct;
 
     // Supports int, double or string primitive type
@@ -163,21 +192,6 @@ namespace PM1 {
     ];
   }
 
-  function check_element($struct, $data) {
-
-    switch ($struct) {
-
-      case PM1_INT: return is_int($data);
-      case PM1_DOUBLE: return is_double($data);
-      case PM1_BYTE: return is_int($data) && ($data >= 0 && $data <= 255);
-      case PM1_STRING: return is_string($data);
-      case PM1_BOOL: return is_bool($data);
-
-    }
-
-    return false;
-  }
-
   function check_value($struct, $data, $depth = []) : array {
 
     switch ($struct) {
@@ -190,20 +204,23 @@ namespace PM1 {
 
       default: {
 
-        [$struct, $composed] = $struct;
+        [
+          'definition'=> $definition,
+          'body'=> $body,
+        ] = $struct;
 
-        switch ($struct) {
+        switch ($definition) {
 
-          case PM1_ARRAY: return check_array($composed, $data, $depth);
-          case PM1_ENUMERATION: return check_enumeration($composed, $data, $depth);
-          case PM1_OBJECT: return check_object($composed, $data, $depth);
-          case PM1_REGULAR_EXPRESSION: return check_regular_expression($composed, $data, $depth);
-          case PM1_RANGE: return check_range($composed, $data, $depth);
+          case PM1_ARRAY: return check_array($body, $data, $depth);
+          case PM1_ENUMERATION: return check_enumeration($body, $data, $depth);
+          case PM1_OBJECT: return check_object($body, $data, $depth);
+          case PM1_REGULAR_EXPRESSION: return check_regular_expression($body, $data, $depth);
+          case PM1_RANGE: return check_range($body, $data, $depth);
 
           default: {
             throw new InvalidArgumentException(<<<Message
               Invalid notation found,
-
+              
               please check.
               Message
             );
@@ -213,7 +230,8 @@ namespace PM1 {
     }
   }
 
-  function filter($struct, $data) {
+
+  function filter($struct, $data, $frame = 'root') {
 
     [
       $isSuccess,
@@ -224,7 +242,7 @@ namespace PM1 {
     );
 
     if (!$isSuccess) {
-      throw new ValidateException('Invalid value for '.implode('.', $depth));
+      throw new ValidateException($struct, $depth);
     }
   }
 }

@@ -4,7 +4,7 @@
   "autoload-dev": {
     "psr-4": {
       "GarryDzeng\\Filter\\": "spec",
-      "PM1\\": "spec"
+      "GarryDzeng\\PM1\\": "spec"
     }
   },
   "autoload": {
@@ -23,6 +23,7 @@
   },
   "require": {
     "ext-mbstring": "*",
+    "brick/varexporter": "^0.3.2",
     "php": "^7.4"
   }
 }

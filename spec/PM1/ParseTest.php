@@ -1,13 +1,16 @@
 <?php
-namespace PM1 {
+namespace GarryDzeng\PM1 {
 
   class ParseTest extends \PHPUnit\Framework\TestCase {
 
-
+    public function testInvalidKeyword() {
+      $this->expectException(ParseException::class);
+      parse('fuck');
+    }
 
     public function testParse() {
 
-      $struct = parse(<<<Source
+      $source = <<<Source
         {
           id: int<1>,
           openid: /^[\da-f]{32}$/igm,
@@ -28,7 +31,9 @@ namespace PM1 {
           ),
         }
         Source
-      );
+      ;
+
+      $struct = parse($source);
 
       var_dump($struct);
     }
