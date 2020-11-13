@@ -83,7 +83,7 @@ namespace GarryDzeng\PM1 {
     // leading zero
     if ('0' == $start && ($token = read($stream)) != null) {
 
-      if ("\x2e" != $token) {
+      if ('.' != $token) {
         throw new ParseException(<<<Message
           Illegal double found,
           you should follow a dot character if it starts with zero,
@@ -115,7 +115,7 @@ namespace GarryDzeng\PM1 {
     }
 
     // Append zero if it ends with dot character (example: "1." => "1.0")
-    if ("\x2e" === substr($start, -1)) {
+    if ('.' === substr($start, -1)) {
       $start .= '0';
     }
 
@@ -249,13 +249,14 @@ namespace GarryDzeng\PM1 {
       $range = as_range($stream, PM1_DOUBLE == $keyword);
 
       if ( $range ) {
-        // create a tuple structure
         return [
-          PM1_RANGE,
-          [
-            'lower_bound'=> $range[0],
-            'upper_bound'=> $range[1],
+          'definition'=> PM1_RANGE,
+          'body'=> [
             'keyword'=> $keyword,
+            'bound'=> [
+              'minimal'=> $range[0],
+              'maximal'=> $range[1],
+            ]
           ]
         ];
       }
@@ -379,8 +380,8 @@ namespace GarryDzeng\PM1 {
         // we determined a t of object so returns
         if ('}' == $token) {
           return [
-            PM1_OBJECT,
-            $done
+            'definition'=> PM1_OBJECT,
+            'body'=> $done
           ];
         }
         else {
@@ -434,8 +435,8 @@ namespace GarryDzeng\PM1 {
     }
 
     return [
-      PM1_OBJECT,
-      $done
+      'definition'=> PM1_OBJECT,
+      'body'=> $done
     ];
   }
 
@@ -490,8 +491,8 @@ namespace GarryDzeng\PM1 {
         // we determine a Terminator of enumeration
         if (')' == $token) {
           return [
-            PM1_ENUMERATION,
-            $done
+            'definition'=> PM1_ENUMERATION,
+            'body'=> $done
           ];
         }
         else {
@@ -531,8 +532,8 @@ namespace GarryDzeng\PM1 {
     }
 
     return [
-      PM1_ENUMERATION,
-      $done
+      'definition'=> PM1_ENUMERATION,
+      'body'=> $done
     ];
   }
 
@@ -560,8 +561,8 @@ namespace GarryDzeng\PM1 {
     }
 
     return [
-      PM1_ARRAY,
-      $item
+      'definition'=> PM1_ARRAY,
+      'body'=> $item,
     ];
   }
 
@@ -621,8 +622,8 @@ namespace GarryDzeng\PM1 {
     }
 
     return [
-      PM1_REGULAR_EXPRESSION,
-      [
+      'definition'=> PM1_REGULAR_EXPRESSION,
+      'body'=> [
         'pattern'=> $pattern,
         'flag'=> [
           'global'=> $global,
