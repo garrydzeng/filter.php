@@ -146,7 +146,7 @@ namespace GarryDzeng\PM1 {
     }
   }
 
-  class ValidateException extends Exception {
+  class FilterException extends Exception {
 
     public $declaration;
     public $depth;
@@ -415,7 +415,6 @@ namespace GarryDzeng\PM1 {
       }
     }
 
-    // Handles primitive type
     return [
       'success'=> $success,
       'declaration'=> $struct,
@@ -436,7 +435,7 @@ namespace GarryDzeng\PM1 {
     );
 
     if (!$success) {
-      throw new ValidateException(
+      throw new FilterException(
         'Value of property (or itself) "/'.implode('/', $depth).'" does not fulfill declaration : '.stringify($declaration),
         $declaration,
         $depth
