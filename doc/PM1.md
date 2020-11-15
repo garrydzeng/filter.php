@@ -1,6 +1,6 @@
 # Primitive types
 
-This language has 5 primitive types ...
+This format has 5 primitive types ...
 
 - `int` integer value
 - `double` floating-point real numbers

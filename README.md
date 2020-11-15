@@ -1,6 +1,6 @@
 # A Filter & Generator Library
 
-We create a domain specific language (called "PM1") that used to describe data structure.
+We create a data format (called "PM1") that used to describe data structure.
 
 ## Language Guide
 
