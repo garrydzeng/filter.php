@@ -28,12 +28,12 @@ namespace GarryDzeng\Filter {
       }
 
       // Path to PHP script
-      $compiled = $this->cache.DIRECTORY_SEPARATOR.md5($pathname);
+      $executable = $this->cache.DIRECTORY_SEPARATOR.md5($pathname);
 
       // Check if it doesn't expired
-      if (file_exists($compiled) && filemtime($compiled) >= filemtime($pathname)) {
+      if (file_exists($executable) && filemtime($executable) >= filemtime($pathname)) {
         return
-          require($compiled)
+          require($executable)
         ;
       }
 
@@ -52,11 +52,11 @@ namespace GarryDzeng\Filter {
       assert($success, "Incorrect or empty Notation found: ". ($error ?? '∅'));
 
       // ensure directory
-      mkdir(pathinfo($compiled, PATHINFO_DIRNAME), 0600, true);
+      mkdir(pathinfo($executable, PATHINFO_DIRNAME), 0777, true);
 
       // refresh file contents if outdated
       file_put_contents(
-        $compiled,
+        $executable,
         sprintf("<?php\nreturn %s;", var_export(
           $struct,
           true
