@@ -1,169 +1,6 @@
 <?php
 namespace GarryDzeng\PM1 {
 
-  use InvalidArgumentException;
-  use Throwable;
-
-  function print_object($struct) {
-
-    $pieces = [];
-
-    foreach ($struct as [
-      'value'=> $value,
-      'is_optional'=> $optional,
-      'name'=> $name,
-    ])
-    {
-      $pieces[] = ($optional ? "$name?: " : "$name: ").stringify($value);
-    }
-
-    return '{ '
-      .implode(', ', $pieces).
-    ' }';
-  }
-
-  function print_enumeration($struct) {
-    return '('
-      .implode(',', $struct).
-    ')';
-  }
-
-  function print_array($struct) {
-
-    switch ($struct) {
-
-      case PM1_INT: return '[int]';
-      case PM1_DOUBLE: return '[double]';
-      case PM1_BYTE: return '[byte]';
-      case PM1_STRING: return '[string]';
-      case PM1_BOOL: return '[bool]';
-
-      default: {
-
-        [
-          'definition'=> $what,
-          'body'=> $body,
-        ] = $struct;
-
-        switch ($what) {
-
-          case PM1_ENUMERATION: return print_enumeration($body);
-          case PM1_OBJECT: return print_object($body);
-
-          default: {
-            throw new InvalidArgumentException(<<<Message
-              Invalid notation found,
-              An array must contain a primitive type, enumeration or object, 
-              please check.
-              Message
-            );
-          }
-        }
-      }
-    }
-  }
-
-  function print_regular_expression($struct) {
-
-    [
-      'pattern'=> $pattern,
-      'flag'=> [
-        'global'=> $global,
-        'case_insensitive'=> $caseInsensitive,
-        'multi'=> $multi,
-      ]
-    ] = $struct;
-
-    $modifier = '';
-
-    if ($global) $modifier .= 'g';
-    if ($caseInsensitive) $modifier .= 'i';
-    if ($multi) $modifier .= 'm';
-
-    return "/$pattern/$modifier";
-  }
-
-  function print_range($struct) {
-
-    [
-      'keyword'=> $keyword,
-      'bound'=> [
-        'minimal'=> $minimal,
-        'maximal'=> $maximal,
-      ]
-    ] = $struct;
-
-    switch ($keyword) {
-
-      case PM1_STRING: $keyword = 'string'; break;
-      case PM1_INT: $keyword = 'int'; break;
-      case PM1_DOUBLE: $keyword = 'double'; break;
-
-      default: {
-        throw new InvalidArgumentException(
-
-        );
-      }
-    }
-
-    return isset($maximal) ? (isset($minimal) ? "$keyword<$minimal>" : $keyword) : "$keyword<$minimal,$maximal>";
-  }
-
-  function stringify($struct) {
-
-    switch ($struct) {
-
-      case PM1_INT: return 'int';
-      case PM1_DOUBLE: return 'double';
-      case PM1_BYTE: return 'byte';
-      case PM1_STRING: return 'string';
-      case PM1_BOOL: return 'bool';
-
-      default: {
-
-        [
-          'definition'=> $what,
-          'body'=> $body,
-        ] = $struct;
-
-        switch ($what) {
-
-          case PM1_ARRAY: return print_array($body);
-          case PM1_ENUMERATION: return print_enumeration($body);
-          case PM1_OBJECT: return print_object($body);
-          case PM1_REGULAR_EXPRESSION: return print_regular_expression($body);
-          case PM1_RANGE: return print_range($body);
-
-          default: {
-            throw new InvalidArgumentException(<<<Message
-              Invalid notation found,
-              please check.
-              Message
-            );
-          }
-        }
-      }
-    }
-  }
-
-  class FilterException extends Exception {
-
-    public $declaration;
-    public $depth;
-
-    public function __construct($message, $declaration, array $depth, Throwable $previous = null) {
-
-      $this->declaration = $declaration;
-      $this->depth = $depth;
-
-      parent::__construct(
-        $message,
-        0x00,
-        $previous
-      );
-    }
-  }
-
   function check_object($struct, $data, $depth = []) : array {
 
     // Expect associative array in PHP language
@@ -276,9 +113,12 @@ namespace GarryDzeng\PM1 {
             case PM1_OBJECT: $future = check_object($body, $value, [...$depth, $index]); break;
 
             default: {
-              throw new InvalidArgumentException(
-
-              );
+              // unknown definition found
+              return [
+                'success'=> false,
+                'declaration'=> $body ?? [],
+                'depth'=> $extra
+              ];
             }
           }
 
@@ -338,7 +178,7 @@ namespace GarryDzeng\PM1 {
     [
       'body'=> [
         'keyword'=> $keyword,
-        'bound'=> [
+        'range'=> [
           'minimal'=> $minimal,
           'maximal'=> $maximal,
         ]
@@ -404,12 +244,7 @@ namespace GarryDzeng\PM1 {
           case PM1_RANGE: return check_range($struct, $data, $depth);
 
           default: {
-            throw new InvalidArgumentException(<<<Message
-              Invalid notation found,
-              
-              please check.
-              Message
-            );
+            $success = false;
           }
         }
       }
@@ -422,7 +257,6 @@ namespace GarryDzeng\PM1 {
     ];
   }
 
-
   function filter($notation, $data) {
 
     [
@@ -430,16 +264,22 @@ namespace GarryDzeng\PM1 {
       'declaration'=> $declaration,
       'depth'=> $depth
     ] = check_value(
+      // require definition & body only
       $notation,
       $data
     );
 
+    $error = 'Everything is OK';
+
     if (!$success) {
-      throw new FilterException(
-        'Value of property (or itself) "/'.implode('/', $depth).'" does not fulfill declaration : '.stringify($declaration),
-        $declaration,
-        $depth
-      );
+      $error = 'Value of property (or itself) "/'.implode('/', $depth).'" does not fulfill declaration : '.describe($declaration);
     }
+
+    return [
+      'success'=> $success,
+      'error'=> $error,
+      'declaration'=> $declaration,
+      'depth'=> $depth
+    ];
   }
 }

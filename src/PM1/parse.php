@@ -12,10 +12,6 @@ namespace GarryDzeng\PM1 {
   define('PM1_ENUMERATION', 7);
   define('PM1_ARRAY', 8);
 
-  class ParseException extends Exception {
-
-  }
-
   function TokenStream(string $source) : array {
     return [
       'value'=> $source,
@@ -230,12 +226,14 @@ namespace GarryDzeng\PM1 {
     {
       // Simple error
       if (read($stream) != $expected[ $index ]) {
-        throw new ParseException(<<<Message
-          Invalid primitive type,
-          they must be one of int, double, bool, string or byte literal,
-          please check!
-          Message
-        );
+        return [
+          'success'=> false,
+          'error'=> "
+            Invalid primitive type,
+            they must be one of int, double, bool, string or byte literal,
+            please check!
+          "
+        ];
       }
     }
 
@@ -248,21 +246,44 @@ namespace GarryDzeng\PM1 {
     {
       $range = as_range($stream, PM1_DOUBLE == $keyword);
 
+      // Parse range successfully
       if ( $range ) {
-        return [
-          'definition'=> PM1_RANGE,
-          'body'=> [
-            'keyword'=> $keyword,
-            'bound'=> [
-              'minimal'=> $range[0],
-              'maximal'=> $range[1],
-            ]
+
+        [
+          'success'=> $success,
+          'error'=> $error,
+          'range'=> [
+            'minimal'=> $minimal,
+            'maximal'=> $maximal
           ]
+        ] = $range;
+
+        if ($success) {
+          return [
+            'success'=> $success,
+            'definition'=> PM1_RANGE,
+            'body'=> [
+              'keyword'=> $keyword,
+              'range'=> [
+                'minimal'=> $minimal,
+                'maximal'=> $maximal,
+              ]
+            ]
+          ];
+        }
+
+        return [
+          'success'=> $success,
+          'error'=> $error,
         ];
       }
     }
 
-    return $keyword;
+    return [
+      'success'=> true,
+      'definition'=> $keyword,
+      'body'=> null
+    ];
   }
 
   function as_range(array &$stream, bool $double = false) {
@@ -276,13 +297,17 @@ namespace GarryDzeng\PM1 {
 
     if ('<' != read($stream)) {
 
-      // recover to previous state if failed to determine
       $stream = [
         'value'=> $value,
         'token'=> $token,
         'index'=> $index,
       ];
 
+      /*
+       * don't determine as range
+       * if next character doesn't equals to "<" character
+       * return special value
+       */
       return null;
     }
 
@@ -295,20 +320,25 @@ namespace GarryDzeng\PM1 {
     // range only contains minimal value if ">" character determined
     if ('>' == $token) {
       return [
-        $minimal,
-        null
+        'success'=> true,
+        'range'=> [
+          'minimal'=> $minimal,
+          'maximal'=> null
+        ]
       ];
     }
 
     // Expect "," delimiter before maximal value
     if (',' != $token) {
-      throw new ParseException(<<<Message
-        Invalid range delimiter,
-        You should insert a "," character between minimal & maximal value,
-        ignore it when contains minimal value,
-        please check!
-        Message
-      );
+      return [
+        'success'=> false,
+        'error'=> '
+          Invalid range delimiter,
+          You should insert a "," character between minimal & maximal value,
+          ignore it when contains minimal value,
+          please check!
+        '
+      ];
     }
 
     $maximal = $double ? as_double($stream) : as_int($stream);
@@ -318,17 +348,22 @@ namespace GarryDzeng\PM1 {
     ] = $stream;
 
     if ('>' != $token) {
-      throw new ParseException(<<<Message
-        Invalid range closer,
-        every range must enclosed by ">" character but got "$token",
-        please check.
-        Message
-      );
+      return [
+        'success'=> false,
+        'error'=> '
+          Invalid range closer,
+          every range must enclosed by ">" character but got "'.$token.'",
+          please check.
+        '
+      ];
     }
 
     return [
-      $minimal,
-      $maximal
+      'success'=> true,
+      'range'=> [
+        'minimal'=> $minimal,
+        'maximal'=> $maximal
+      ]
     ];
   }
 
@@ -351,16 +386,16 @@ namespace GarryDzeng\PM1 {
           case 'y': return as_keyword($stream, PM1_BYTE);
         }
       }
-
-      default: {
-        throw new ParseException(<<<Message
-          Invalid primitive type,
-          this is unrecognized character of type's beginning,
-          please check.
-          Message
-        );
-      }
     }
+
+    return [
+      'success'=> false,
+      'error'=> "
+        Invalid primitive type, 
+        this is unrecognized character of type's beginning,
+        please check.
+      "
+    ];
   }
 
   function as_object(array &$stream) {
@@ -380,18 +415,21 @@ namespace GarryDzeng\PM1 {
         // we determined a t of object so returns
         if ('}' == $token) {
           return [
+            'success'=> true,
             'definition'=> PM1_OBJECT,
             'body'=> $done
           ];
         }
         else {
-          throw new ParseException(<<<Message
-            The first character of the name must be a letter. 
-            The underscore is also a legal first character but its use is not recommended at the beginning of a name. 
-            Underscore is often used with special commands, 
-            and it's sometimes hard to read.
-            Message
-          );
+          return [
+            'success'=> false,
+            'error'=> "
+              The first character of the name must be a letter. 
+              The underscore is also a legal first character but its use is not recommended at the beginning of a name. 
+              Underscore is often used with special commands, 
+              and it's sometimes hard to read.
+            "
+          ];
         }
       }
 
@@ -405,17 +443,38 @@ namespace GarryDzeng\PM1 {
       // Peek current character
       // it should be colon because it delimits key & value
       if (':' != $token) {
-        throw new ParseException(
+        return [
+          'success'=> false,
+          'error'=> '
+            
+          '
+        ];
+      }
 
-        );
+      [
+        'success'=> $success,
+        'error'=> $error,
+        'definition'=> $definition,
+        'body'=> $body,
+      ] = as_value(
+        $stream
+      );
+
+      // Stop
+      if (!$success) {
+        return [
+          'success'=> $success,
+          'error'=> $error,
+        ];
       }
 
       $done[] = [
         'name'=> $name,
         'is_optional'=> $optional,
-        'value'=> as_value(
-          $stream
-        )
+        'value'=> [
+          'definition'=> $definition,
+          'body'=> $body,
+        ]
       ];
 
       // doesn't continue if we don't determine a delimiter
@@ -429,12 +488,16 @@ namespace GarryDzeng\PM1 {
     ] = $stream;
 
     if ('}' != $token) {
-      throw new ParseException(
-
-      );
+      return [
+        'success'=> false,
+        'error'=> '
+          
+        '
+      ];
     }
 
     return [
+      'success'=> true,
       'definition'=> PM1_OBJECT,
       'body'=> $done
     ];
@@ -467,9 +530,12 @@ namespace GarryDzeng\PM1 {
         // Peek current character
         // it should be equal because it delimits key & value
         if ('=' != $token) {
-          throw new ParseException(
-
-          );
+          return [
+            'success'=> false,
+            'error'=> '
+              
+            '
+          ];
         }
       }
       else {
@@ -491,17 +557,20 @@ namespace GarryDzeng\PM1 {
         // we determine a Terminator of enumeration
         if (')' == $token) {
           return [
+            'success'=> true,
             'definition'=> PM1_ENUMERATION,
             'body'=> $done
           ];
         }
         else {
-          throw new ParseException(<<<Message
-            Integer should composed by negative(or positive) sign & digit character, 
-            first character must be sign or digit, 
-            but exclude zero.
-            Message
-          );
+          return [
+            'success'=> false,
+            'error'=> '
+              Integer should composed by negative(or positive) sign & digit character, 
+              first character must be sign or digit, 
+              but exclude zero.
+            '
+          ];
         }
       }
 
@@ -526,12 +595,16 @@ namespace GarryDzeng\PM1 {
 
     // enumeration must end with ")" character
     if (')' != $token) {
-      throw new ParseException(
-
-      );
+      return [
+        'success'=> false,
+        'error'=> '
+          
+        '
+      ];
     }
 
     return [
+      'success'=> true,
       'definition'=> PM1_ENUMERATION,
       'body'=> $done
     ];
@@ -543,24 +616,30 @@ namespace GarryDzeng\PM1 {
 
     // Every array must contain a primitive, enumeration or object
     if (']' == $token) {
-      throw new ParseException(<<<Message
-        
-        Message
-      );
+      return [
+        'success'=> false,
+        'error'=> '
+          Empty element found,
+          an array must contain a primitive, enumeration or object, 
+          please check.
+        '
+      ];
     }
 
     $item = ('(' == $token) ? as_enumeration($stream) : ('{' == $token ? as_object($stream) : as_primitive($stream));
-    $next = read($stream);
 
     // Array should enclosed by "]" character
-    if ($next != ']') {
-      throw new ParseException(<<<Message
-        
-        Message
-      );
+    if (']' != read($stream)) {
+      return [
+        'success'=> false,
+        'error'=> '
+          
+        '
+      ];
     }
 
     return [
+      'success'=> true,
       'definition'=> PM1_ARRAY,
       'body'=> $item,
     ];
@@ -570,16 +649,18 @@ namespace GarryDzeng\PM1 {
 
     $pattern = null;
 
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
     while (($token = read($stream, true, $previous)) != null && ('/' != $token || '\\' == $previous)) {
       $pattern .= $token;
     }
 
     // regular expression must delimited by "/" character
     if ('/' != $token) {
-      throw new ParseException(
-
-      );
+      return [
+        'success'=> false,
+        'error'=> '
+          
+        '
+      ];
     }
 
     $global = false;
@@ -622,6 +703,7 @@ namespace GarryDzeng\PM1 {
     }
 
     return [
+      'success'=> true,
       'definition'=> PM1_REGULAR_EXPRESSION,
       'body'=> [
         'pattern'=> $pattern,
@@ -636,7 +718,7 @@ namespace GarryDzeng\PM1 {
 
   function as_value(array &$stream) {
 
-    /**
+    /*
      * Consume a character used to determine parsing policy
      * { -> object
      * ( -> enumeration

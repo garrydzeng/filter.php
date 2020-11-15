@@ -6,6 +6,7 @@ namespace GarryDzeng\PM1 {
     public function testFilter() {
 
       $struct = array (
+        'success' => true,
         'definition' => 6,
         'body' =>
           array (
@@ -39,7 +40,7 @@ namespace GarryDzeng\PM1 {
                         'pattern' => '^[\\da-f]{32}$',
                         'flag' =>
                           array (
-                            'global' => true,
+                            'global' => false,
                             'case_insensitive' => true,
                             'multi' => true,
                           ),
@@ -50,7 +51,11 @@ namespace GarryDzeng\PM1 {
               array (
                 'name' => 'sn',
                 'is_optional' => false,
-                'value' => 1,
+                'value' =>
+                  array (
+                    'definition' => 1,
+                    'body' => NULL,
+                  ),
               ),
             3 =>
               array (
@@ -59,7 +64,12 @@ namespace GarryDzeng\PM1 {
                 'value' =>
                   array (
                     'definition' => 8,
-                    'body' => 4,
+                    'body' =>
+                      array (
+                        'success' => true,
+                        'definition' => 4,
+                        'body' => NULL,
+                      ),
                   ),
               ),
             4 =>
@@ -111,7 +121,11 @@ namespace GarryDzeng\PM1 {
                           array (
                             'name' => 'name',
                             'is_optional' => false,
-                            'value' => 4,
+                            'value' =>
+                              array (
+                                'definition' => 4,
+                                'body' => NULL,
+                              ),
                           ),
                       ),
                   ),
@@ -137,17 +151,30 @@ namespace GarryDzeng\PM1 {
           ),
       );
 
-      filter($struct, [
-        'id'=> 1,
-        'openid'=> '8945506e3e6347a0937c53833bca2cdf',
-        'sn'=> 1,
-        'type'=> 1,
-        'plan'=> [
-          'space'=> -1, // Invalid
-          'private_repos'=> 20,
-          'name'=> 'Small'
+      [
+        'definition'=> $definition,
+        'body'=> $body,
+      ] = $struct;
+
+
+
+      filter(
+        [
+          'definition'=> $definition,
+          'body'=> $body,
+        ],
+        [
+          'id'=> 1,
+          'openid'=> '8945506e3e6347a0937c53833bca2cdf',
+          'sn'=> 1,
+          'type'=> 998,
+          'plan'=> [
+            'space'=> 2, // Invalid
+            'private_repos'=> 20,
+            'name'=> 'Small'
+          ]
         ]
-      ]);
+      );
     }
   }
 }

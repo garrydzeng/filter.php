@@ -28,7 +28,7 @@ namespace GarryDzeng\PM1 {
             center = 4,
             team = 5,
             6,
-          ),
+          )
         }
         Source
       ;
