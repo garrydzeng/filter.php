@@ -221,32 +221,26 @@ namespace GarryDzeng\PM1 {
 
   function check_value($struct, $data, $depth = []) : array {
 
-    switch ($struct) {
+    [
+      'definition'=> $definition,
+    ] = $struct;
 
-      case PM1_INT: $success = is_int($data); break;
-      case PM1_DOUBLE: $success = is_double($data); break;
-      case PM1_BYTE: $success = is_int($data) && ($data >= 0 && $data <= 255); break;
-      case PM1_STRING: $success = is_string($data); break;
-      case PM1_BOOL: $success = is_bool($data); break;
+    switch ($definition) {
+
+      case PM1_ARRAY : return check_array($struct, $data, $depth);
+      case PM1_ENUMERATION : return check_enumeration($struct, $data, $depth);
+      case PM1_OBJECT : return check_object($struct, $data, $depth);
+      case PM1_REGULAR_EXPRESSION : return check_regular_expression($struct, $data, $depth);
+      case PM1_RANGE : return check_range($struct, $data, $depth);
+
+      case PM1_INT : $success = is_int($data); break;
+      case PM1_DOUBLE : $success = is_double($data); break;
+      case PM1_BYTE : $success = is_int($data) && ($data >= 0 && $data <= 255); break;
+      case PM1_STRING : $success = is_string($data); break;
+      case PM1_BOOL : $success = is_bool($data); break;
 
       default: {
-
-        [
-          'definition'=> $what,
-        ] = $struct;
-
-        switch ($what) {
-
-          case PM1_ARRAY: return check_array($struct, $data, $depth);
-          case PM1_ENUMERATION: return check_enumeration($struct, $data, $depth);
-          case PM1_OBJECT: return check_object($struct, $data, $depth);
-          case PM1_REGULAR_EXPRESSION: return check_regular_expression($struct, $data, $depth);
-          case PM1_RANGE: return check_range($struct, $data, $depth);
-
-          default: {
-            $success = false;
-          }
-        }
+        $success = false;
       }
     }
 
@@ -264,7 +258,6 @@ namespace GarryDzeng\PM1 {
       'declaration'=> $declaration,
       'depth'=> $depth
     ] = check_value(
-      // require definition & body only
       $notation,
       $data
     );

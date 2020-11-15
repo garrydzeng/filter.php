@@ -12,7 +12,7 @@
       "GarryDzeng\\Filter\\": "src"
     },
     "files": [
-      "src/PM1/exception.php",
+      "src/PM1/describe.php",
       "src/PM1/filter.php",
       "src/PM1/generate.php",
       "src/PM1/parse.php"
@@ -23,7 +23,7 @@
   },
   "require": {
     "ext-mbstring": "*",
-    "brick/varexporter": "^0.3.2",
-    "php": "^7.4"
+    "php": "^7.4",
+    "brick/varexporter": "^0.3.2"
   }
 }

@@ -1,6 +1,6 @@
 {
   id: int<1>,
-  openid: /^[\da-f]{32} $/igm,
+  openid: /^[\da-f]{32}$/im,
   sn: int,
   describe_as?: [string],
   plan: {
