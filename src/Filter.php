@@ -42,6 +42,8 @@ namespace GarryDzeng\Filter {
       [
         'success'=> $success,
         'error'=> $error,
+        'definition'=> $definition,
+        'body'=> $body,
       ] = $struct;
 
       /*
@@ -50,6 +52,11 @@ namespace GarryDzeng\Filter {
        * is enough
        */
       assert($success, "Incorrect or empty Notation found: ". ($error ?? '∅'));
+
+      $struct = [
+        'definition'=> $definition,
+        'body'=> $body,
+      ];
 
       // ensure directory
       mkdir(pathinfo($executable, PATHINFO_DIRNAME), 0777, true);
