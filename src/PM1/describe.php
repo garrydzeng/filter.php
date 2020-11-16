@@ -110,7 +110,12 @@ namespace GarryDzeng\PM1 {
 
   function describe($struct) {
 
-    switch ($struct) {
+    [
+      'definition'=> $definition,
+      'body'=> $body,
+    ] = $struct;
+
+    switch ($definition) {
 
       case PM1_INT: return 'int';
       case PM1_DOUBLE: return 'double';
@@ -118,29 +123,18 @@ namespace GarryDzeng\PM1 {
       case PM1_STRING: return 'string';
       case PM1_BOOL: return 'bool';
 
+      case PM1_ARRAY: return print_array($body);
+      case PM1_ENUMERATION: return print_enumeration($body);
+      case PM1_OBJECT: return print_object($body);
+      case PM1_REGULAR_EXPRESSION: return print_regular_expression($body);
+      case PM1_RANGE: return print_range($body);
+
       default: {
-
-        [
-          'definition'=> $what,
-          'body'=> $body,
-        ] = $struct;
-
-        switch ($what) {
-
-          case PM1_ARRAY: return print_array($body);
-          case PM1_ENUMERATION: return print_enumeration($body);
-          case PM1_OBJECT: return print_object($body);
-          case PM1_REGULAR_EXPRESSION: return print_regular_expression($body);
-          case PM1_RANGE: return print_range($body);
-
-          default: {
-            throw new InvalidArgumentException(<<<Message
-              Invalid notation found,
-              please check.
-              Message
-            );
-          }
-        }
+        throw new InvalidArgumentException(<<<Message
+          Invalid notation found,
+          please check.
+          Message
+        );
       }
     }
   }
