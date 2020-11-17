@@ -80,12 +80,14 @@ namespace GarryDzeng\PM1 {
     if ('0' == $start && ($token = read($stream)) != null) {
 
       if ('.' != $token) {
-        throw new ParseException(<<<Message
-          Illegal double found,
-          you should follow a dot character if it starts with zero,
-          please check.
-          Message
-        );
+        return [
+          'success'=> false,
+          'error'=> '
+            Illegal double found,
+            you should follow a dot character if it starts with zero,
+            please check.
+          '
+        ];
       }
 
       $start .= $token;
