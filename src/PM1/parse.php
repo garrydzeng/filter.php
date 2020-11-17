@@ -228,13 +228,20 @@ namespace GarryDzeng\PM1 {
     {
       // Simple error
       if (read($stream) != $expected[ $index ]) {
+
+        [
+          'index'=> $start,
+        ] = $stream;
+
+        $start--;
+
         return [
           'success'=> false,
-          'error'=> "
-            Invalid primitive type,
-            they must be one of int, double, bool, string or byte literal,
-            please check!
-          "
+          'error'=> <<<N
+            You have an error in your PM1 syntax, 
+            check the manual that corresponds to your library version for the right syntax to use, 
+            near offset <$start>.
+          N
         ];
       }
     }
@@ -317,6 +324,7 @@ namespace GarryDzeng\PM1 {
 
     [
       'token'=> $token,
+      'index'=> $index,
     ] = $stream;
 
     // range only contains minimal value if ">" character determined
@@ -334,12 +342,11 @@ namespace GarryDzeng\PM1 {
     if (',' != $token) {
       return [
         'success'=> false,
-        'error'=> '
-          Invalid range delimiter,
-          You should insert a "," character between minimal & maximal value,
-          ignore it when contains minimal value,
-          please check!
-        '
+        'error'=> <<<N
+          You have an error in your PM1 syntax, 
+          check the manual that corresponds to your library version for the right syntax to use, 
+          near offset <$index>.
+        N
       ];
     }
 
@@ -347,16 +354,17 @@ namespace GarryDzeng\PM1 {
 
     [
       'token'=> $token,
+      'index'=> $index,
     ] = $stream;
 
     if ('>' != $token) {
       return [
         'success'=> false,
-        'error'=> '
-          Invalid range closer,
-          every range must enclosed by ">" character but got "'.$token.'",
-          please check.
-        '
+        'error'=> <<<N
+          You have an error in your PM1 syntax, 
+          check the manual that corresponds to your library version for the right syntax to use, 
+          near offset <$index>.
+        N
       ];
     }
 
@@ -374,7 +382,8 @@ namespace GarryDzeng\PM1 {
     [
       // Peek a character because we check itself, not children
       // Don't read new character !
-      'token'=> $token
+      'token'=> $token,
+      'index'=> $index,
     ] = $stream;
 
     switch ($token) {
@@ -390,13 +399,15 @@ namespace GarryDzeng\PM1 {
       }
     }
 
+    $index -= 1;
+
     return [
       'success'=> false,
-      'error'=> "
-        Invalid primitive type, 
-        this is unrecognized character of type's beginning,
-        please check.
-      "
+      'error'=> <<<N
+        You have an error in your PM1 syntax, 
+        check the manual that corresponds to your library version for the right syntax to use, 
+        near offset <$index>.
+      N
     ];
   }
 
@@ -410,6 +421,7 @@ namespace GarryDzeng\PM1 {
 
       [
         'token'=> $token,
+        'index'=> $index,
       ] = $stream;
 
       if (!$name) {
@@ -423,14 +435,16 @@ namespace GarryDzeng\PM1 {
           ];
         }
         else {
+
+          $index -= 1;
+
           return [
             'success'=> false,
-            'error'=> "
-              The first character of the name must be a letter. 
-              The underscore is also a legal first character but its use is not recommended at the beginning of a name. 
-              Underscore is often used with special commands, 
-              and it's sometimes hard to read.
-            "
+            'error'=> <<<N
+              You have an error in your PM1 syntax, 
+              check the manual that corresponds to your library version for the right syntax to use, 
+              near offset <$index>.
+            N
           ];
         }
       }
@@ -439,17 +453,29 @@ namespace GarryDzeng\PM1 {
 
       // Move to next character if "?" determined
       if ($optional) {
-        $token = read($stream);
+        read(
+          $stream
+        );
       }
+
+      [
+        'token'=> $token,
+        'index'=> $index,
+      ] = $stream;
 
       // Peek current character
       // it should be colon because it delimits key & value
       if (':' != $token) {
+
+        $index -= 1;
+
         return [
           'success'=> false,
-          'error'=> '
-            
-          '
+          'error'=> <<<N
+            You have an error in your PM1 syntax, 
+            check the manual that corresponds to your library version for the right syntax to use, 
+            near offset <$index>.
+          N
         ];
       }
 
@@ -486,15 +512,18 @@ namespace GarryDzeng\PM1 {
     }
 
     [
-      'token'=> $token
+      'token'=> $token,
+      'index'=> $index,
     ] = $stream;
 
     if ('}' != $token) {
       return [
         'success'=> false,
-        'error'=> '
-          
-        '
+        'error'=> <<<N
+          You have an error in your PM1 syntax, 
+          check the manual that corresponds to your library version for the right syntax to use, 
+          near offset <$index>.
+        N
       ];
     }
 
@@ -526,17 +555,23 @@ namespace GarryDzeng\PM1 {
       if ($name) {
 
         [
-          'token'=> $token
+          'token'=> $token,
+          'index'=> $start,
         ] = $stream;
 
         // Peek current character
         // it should be equal because it delimits key & value
         if ('=' != $token) {
+
+          $start -= 1;
+
           return [
             'success'=> false,
-            'error'=> '
-              
-            '
+            'error'=> <<<N
+              You have an error in your PM1 syntax, 
+              check the manual that corresponds to your library version for the right syntax to use, 
+              near offset <$start>.
+            N
           ];
         }
       }
@@ -554,6 +589,7 @@ namespace GarryDzeng\PM1 {
 
         [
           'token'=> $token,
+          'index'=> $index,
         ] = $stream;
 
         // we determine a Terminator of enumeration
@@ -565,13 +601,14 @@ namespace GarryDzeng\PM1 {
           ];
         }
         else {
+          $index -= 1;
           return [
             'success'=> false,
-            'error'=> '
-              Integer should composed by negative(or positive) sign & digit character, 
-              first character must be sign or digit, 
-              but exclude zero.
-            '
+            'error'=> <<<N
+              You have an error in your PM1 syntax, 
+              check the manual that corresponds to your library version for the right syntax to use, 
+              near offset <$index>.
+            N
           ];
         }
       }
@@ -592,16 +629,19 @@ namespace GarryDzeng\PM1 {
     }
 
     [
-      'token'=> $token
+      'token'=> $token,
+      'index'=> $index,
     ] = $stream;
 
     // enumeration must end with ")" character
     if (')' != $token) {
       return [
         'success'=> false,
-        'error'=> '
-          
-        '
+        'error'=> <<<N
+          You have an error in your PM1 syntax, 
+          check the manual that corresponds to your library version for the right syntax to use, 
+          near offset <$index>.
+        N
       ];
     }
 
@@ -614,29 +654,45 @@ namespace GarryDzeng\PM1 {
 
   function as_array(array &$stream) {
 
-    $token = read($stream);
+    read($stream);
+
+    [
+      'token'=> $token,
+      'index'=> $index,
+    ] = $stream;
 
     // Every array must contain a primitive, enumeration or object
     if (']' == $token) {
+      $index -= 1;
       return [
         'success'=> false,
-        'error'=> '
-          Empty element found,
-          an array must contain a primitive, enumeration or object, 
-          please check.
-        '
+        'error'=> <<<N
+          You have an error in your PM1 syntax, 
+          check the manual that corresponds to your library version for the right syntax to use, 
+          near offset <$index>.
+        N
       ];
     }
 
     $item = ('(' == $token) ? as_enumeration($stream) : ('{' == $token ? as_object($stream) : as_primitive($stream));
 
+    read($stream);
+
+    [
+      'token'=> $token,
+      'index'=> $index,
+    ] = $stream;
+
     // Array should enclosed by "]" character
-    if (']' != read($stream)) {
+    if (']' != $token) {
+      $index -= 1;
       return [
         'success'=> false,
-        'error'=> '
-          
-        '
+        'error'=> <<<N
+          You have an error in your PM1 syntax, 
+          check the manual that corresponds to your library version for the right syntax to use, 
+          near offset <$index>.
+        N
       ];
     }
 
@@ -657,11 +713,20 @@ namespace GarryDzeng\PM1 {
 
     // regular expression must delimited by "/" character
     if ('/' != $token) {
+
+      [
+        'index'=> $index,
+      ] = $stream;
+
+      $index -= 1;
+
       return [
         'success'=> false,
-        'error'=> '
-          
-        '
+        'error'=> <<<N
+          You have an error in your PM1 syntax, 
+          check the manual that corresponds to your library version for the right syntax to use, 
+          near offset <$index>.
+        N
       ];
     }
 

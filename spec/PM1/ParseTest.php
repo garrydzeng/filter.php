@@ -3,9 +3,11 @@ namespace GarryDzeng\PM1 {
 
   class ParseTest extends \PHPUnit\Framework\TestCase {
 
-    public function testInvalidKeyword() {
-      $this->expectException(ParseException::class);
-      parse('fuck');
+    public function testOffset() {
+
+      ['error'=> $error] = parse('int<a,');
+
+      var_dump($error);
     }
 
     public function testParse() {
