@@ -2,6 +2,7 @@
 namespace GarryDzeng\Filter {
 
   use InvalidArgumentException;
+  use RuntimeException;
 
   use function GarryDzeng\PM1\filter;
   use function GarryDzeng\PM1\generate;
@@ -48,15 +49,12 @@ namespace GarryDzeng\Filter {
 
       /*
        * Syntax error can avoid by manual in advance,
-       * report by assertion
-       * is enough
+       * report by exception
+       * for safety
        */
-      assert($success, "Incorrect or empty Notation found: ". ($error ?? '∅'));
-
-      $struct = [
-        'definition'=> $definition,
-        'body'=> $body,
-      ];
+      if (!$success) {
+        throw new RuntimeException("Incorrect or empty Notation found: ". ($error ?? '∅'));
+      }
 
       // ensure directory
       mkdir(pathinfo($executable, PATHINFO_DIRNAME), 0777, true);
