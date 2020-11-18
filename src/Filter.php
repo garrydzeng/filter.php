@@ -43,8 +43,6 @@ namespace GarryDzeng\Filter {
       [
         'success'=> $success,
         'error'=> $error,
-        'definition'=> $definition,
-        'body'=> $body,
       ] = $struct;
 
       /*
