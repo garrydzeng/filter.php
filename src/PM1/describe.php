@@ -117,6 +117,10 @@ namespace GarryDzeng\PM1 {
 
     switch ($definition) {
 
+      case PM1_DATE: return 'date';
+      case PM1_DATETIME: return 'datetime';
+      case PM1_TIME: return 'time';
+
       case PM1_INT: return 'int';
       case PM1_DOUBLE: return 'double';
       case PM1_BYTE: return 'byte';

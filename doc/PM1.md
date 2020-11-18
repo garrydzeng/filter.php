@@ -2,8 +2,11 @@
 
 This format has 5 primitive types ...
 
+- `date` a string like "YYYY-MM-DD"
+- `datetime` a string like "YYYY-MM-DD HH:mm:ss"
+- `time` a string like "HH:mm:ss"
 - `int` integer value
-- `double` floating-point real numbers
+- `double` floating-point numbers
 - `bool` true or false
 - `string` a sequence of character (from 0 to 65535) values
 - `byte` from 0 to 255

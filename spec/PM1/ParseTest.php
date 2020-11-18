@@ -3,11 +3,15 @@ namespace GarryDzeng\PM1 {
 
   class ParseTest extends \PHPUnit\Framework\TestCase {
 
-    public function testOffset() {
+    public function testMalformedSource() {
 
-      ['error'=> $error] = parse('int<a,');
+      $sources = [
+        ''
+      ];
 
-      var_dump($error);
+      $struct = parse('datetime');
+
+      print_r($struct);
     }
 
     public function testParse() {
@@ -19,9 +23,9 @@ namespace GarryDzeng\PM1 {
           sn: int,
           describe_as?: [string],
           plan: {
-             space: int<1>,
-             private_repos: int<0>,
-             name: string,
+            space: int<1>,
+            private_repos: int<0>,
+            name: string,
           },
           type: (
             company = 1,

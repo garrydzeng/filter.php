@@ -1,6 +1,8 @@
 <?php
 namespace GarryDzeng\PM1 {
 
+  use DateTime;
+
   function check_object($struct, $data, $depth = []) : array {
 
     // Expect associative array in PHP language
@@ -219,6 +221,40 @@ namespace GarryDzeng\PM1 {
     ];
   }
 
+  function check_datetime($struct, $data, $depth = []) {
+
+    [
+      'definition'=> $what,
+    ] = $struct;
+
+
+    switch ($what) {
+      case PM1_DATE: $standard = 'Y-m-d'; break;
+      case PM1_DATETIME: $standard = 'Y-m-d H:i:s'; break;
+      case PM1_TIME: $standard = 'H:i:s'; break;
+    }
+
+    if (isset( $standard )) {
+
+      $instance = DateTime::createFromFormat(
+        $standard,
+        $data
+      );
+
+      return [
+        'success'=> false !== $instance && $instance->format($standard) == $data,
+        'declaration'=> $struct,
+        'depth'=> $depth,
+      ];
+    }
+
+    return [
+      'success'=> false,
+      'declaration'=> $struct,
+      'depth'=> $depth,
+    ];
+  }
+
   function check_value($struct, $data, $depth = []) : array {
 
     [
@@ -232,6 +268,11 @@ namespace GarryDzeng\PM1 {
       case PM1_OBJECT : return check_object($struct, $data, $depth);
       case PM1_REGULAR_EXPRESSION : return check_regular_expression($struct, $data, $depth);
       case PM1_RANGE : return check_range($struct, $data, $depth);
+
+      case PM1_DATE:
+      case PM1_DATETIME:
+      case PM1_TIME:
+        return check_datetime($struct, $data, $depth);
 
       case PM1_INT : $success = is_int($data); break;
       case PM1_DOUBLE : $success = is_double($data); break;

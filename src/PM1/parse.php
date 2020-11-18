@@ -11,8 +11,11 @@ namespace GarryDzeng\PM1 {
   define('PM1_OBJECT', 6);
   define('PM1_ENUMERATION', 7);
   define('PM1_ARRAY', 8);
+  define('PM1_DATE', 11);
+  define('PM1_DATETIME', 12);
+  define('PM1_TIME', 13);
 
-  function TokenStream(string $source) : array {
+  function TokenStream(string $source) {
     return [
       'value'=> $source,
       'token'=> null,
@@ -20,7 +23,7 @@ namespace GarryDzeng\PM1 {
     ];
   }
 
-  function read(array &$stream, $whitespace = false, &$previous = null) : ?string {
+  function read(array &$stream, $whitespace = false, &$previous = null) {
 
     [
       'value'=> &$value,
@@ -207,10 +210,13 @@ namespace GarryDzeng\PM1 {
     return $start;
   }
 
-  function as_keyword(array &$stream, int $keyword) {
+  function as_keyword(array &$stream, $keyword) {
 
     // remaining part of primitive types
     static $remaining = [
+      PM1_DATE => 'te',
+      PM1_DATETIME => 'tetime',
+      PM1_TIME => 'ime',
       PM1_INT => 'nt',
       PM1_DOUBLE => 'ouble',
       PM1_BOOL => 'ol',
@@ -295,7 +301,7 @@ namespace GarryDzeng\PM1 {
     ];
   }
 
-  function as_range(array &$stream, bool $double = false) {
+  function as_range(array &$stream, $double = false) {
 
     [
       // create a snapshot of current state
@@ -384,13 +390,20 @@ namespace GarryDzeng\PM1 {
       // Don't read new character !
       'token'=> $token,
       'index'=> $index,
+      'value'=> $value,
     ] = $stream;
 
     switch ($token) {
 
-      case 'd': return as_keyword($stream, PM1_DOUBLE);
       case 'i': return as_keyword($stream, PM1_INT);
       case 's': return as_keyword($stream, PM1_STRING);
+      case 't': return as_keyword($stream, PM1_TIME);
+      case 'd': {
+        switch (read($stream)) {
+          case 'a': return as_keyword($stream, substr($value, $index, 7) == 'atetime' ? PM1_DATETIME : PM1_DATE);
+          case 'o': return as_keyword($stream, PM1_DOUBLE);
+        }
+      }
       case 'b': {
         switch (read($stream)) {
           case 'o': return as_keyword($stream, PM1_BOOL);

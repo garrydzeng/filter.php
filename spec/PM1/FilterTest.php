@@ -3,6 +3,23 @@ namespace GarryDzeng\PM1 {
 
   class FilterTest extends \PHPUnit\Framework\TestCase {
 
+    public function testFilterDatetime() {
+
+      $struct = [
+        'definition'=> PM1_DATE
+      ];
+
+      ['success'=> $r1] = filter($struct, '2020-04-31');
+      ['success'=> $r2] = filter($struct, '1990-02-30');
+      ['success'=> $r3] = filter($struct, '2020-13-30');
+      ['success'=> $r4] = filter($struct, '20-02-06');
+
+      $this->assertFalse($r1);
+      $this->assertFalse($r2);
+      $this->assertFalse($r3);
+      $this->assertFalse($r4);
+    }
+
     public function testFilter() {
 
       $struct = array (
@@ -155,8 +172,6 @@ namespace GarryDzeng\PM1 {
         'definition'=> $definition,
         'body'=> $body,
       ] = $struct;
-
-
 
       filter(
         [
