@@ -1,6 +1,6 @@
 # Primitive types
 
-This format has 5 primitive types ...
+This format has 8 primitive types ...
 
 - `date` a string like "YYYY-MM-DD"
 - `datetime` a string like "YYYY-MM-DD HH:mm:ss"
