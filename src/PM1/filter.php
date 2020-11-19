@@ -5,13 +5,12 @@ namespace GarryDzeng\PM1 {
 
   function check_object($struct, $data, $depth = []) : array {
 
-    // Expect associative array in PHP language
     if (!is_array($data)) {
-      return [
-        'success'=> false,
-        'declaration'=> $struct,
-        'depth'=> $depth
-      ];
+
+      // Expect associative array in PHP language
+      // cast to array
+      // if Not
+      $data = (array)$data;
     }
 
     [
