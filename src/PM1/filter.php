@@ -75,7 +75,7 @@ namespace GarryDzeng\PM1 {
     ];
   }
 
-  function check_array($struct, $data, $depth = []) : array {
+  function check_array($struct, $data, $depth = []) {
 
     if (!is_array($data)) {
       return [
@@ -149,7 +149,7 @@ namespace GarryDzeng\PM1 {
     ];
   }
 
-  function check_regular_expression($struct, $data, $depth = []) : array {
+  function check_regular_expression($struct, $data, $depth = []) {
 
     [
       'body'=> [
@@ -175,7 +175,7 @@ namespace GarryDzeng\PM1 {
     ];
   }
 
-  function check_range($struct, $data, $depth = []) : array {
+  function check_range($struct, $data, $depth = []) {
 
     [
       'body'=> [
@@ -203,9 +203,10 @@ namespace GarryDzeng\PM1 {
     }
 
     // compares length if keyword is PM1_STRING in unicode encoding (mb-string provided)
+    // ignore whitespace of beginning & end
     if ($keyword == PM1_STRING) {
       $data = mb_strlen(
-        $data
+        trim($data)
       );
     }
 
