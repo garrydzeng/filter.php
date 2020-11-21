@@ -1,23 +1,18 @@
 <?php
 namespace GarryDzeng\PM1 {
 
+  use InvalidArgumentException;
   use DateTime;
 
   function check_object($struct, $data, $depth = []) : array {
 
-    if (!is_array($data)) {
-
-      // Expect associative array in PHP language
-      // cast to array
-      // if Not
-      $data = (array)$data;
-    }
+    $data = (array)$data;
 
     [
-      'body'=> $body,
+      'body'=> $properties,
     ] = $struct;
 
-    foreach ($body as [
+    foreach ($properties as [
       'value'=> $child,
       'is_optional'=> $optional,
       'name'=> $name,
@@ -85,7 +80,7 @@ namespace GarryDzeng\PM1 {
     }
 
     [
-      'body'=> $body,
+      'body'=> $element,
     ] = $struct;
 
     foreach ($data as $index => $value) {
@@ -94,37 +89,29 @@ namespace GarryDzeng\PM1 {
       $extra = $depth;
 
       // Element of array allows primitive, object and enumeration
-      switch ($body) {
+      switch ($element) {
 
-        case PM1_INT: $success = is_int($data); break;
-        case PM1_DOUBLE: $success = is_double($data); break;
-        case PM1_BYTE: $success = is_int($data) && ($data >= 0 && $data <= 255); break;
-        case PM1_STRING: $success = is_string($data); break;
-        case PM1_BOOL: $success = is_bool($data); break;
+        case PM1_INT: $success = is_int($value); break;
+        case PM1_DOUBLE: $success = is_double($value); break;
+        case PM1_BYTE: $success = is_int($value) && ($value >= 0 && $value <= 255); break;
+        case PM1_STRING: $success = is_string($value); break;
+        case PM1_BOOL: $success = is_bool($value); break;
 
         default: {
 
           [
             'definition'=> $what,
-          ] = $body;
+          ] = $element;
 
           switch ($what) {
-
-            case PM1_ENUMERATION: $future = check_enumeration($body, $value, [...$depth, $index]); break;
-            case PM1_OBJECT: $future = check_object($body, $value, [...$depth, $index]); break;
-
+            case PM1_ENUMERATION: $future = check_enumeration($element, $value, [...$depth, $index]); break;
+            case PM1_OBJECT: $future = check_object($element, $value, [...$depth, $index]); break;
             default: {
-              // unknown definition found
-              return [
-                'success'=> false,
-                'declaration'=> $body ?? [],
-                'depth'=> $extra
-              ];
+              throw new InvalidArgumentException();
             }
           }
 
           [
-            // Expand result from validation calling
             'success'=> $success,
             'declaration'=> $declaration,
             'depth'=> $extra
@@ -221,58 +208,24 @@ namespace GarryDzeng\PM1 {
     ];
   }
 
-  function check_datetime($struct, $data, $depth = []) {
+  function check_datetime($data, array $acceptable) {
 
-    [
-      'definition'=> $what,
-    ] = $struct;
+    foreach ($acceptable as $v) {
 
+      $instance = DateTime::createFromFormat($v, $data);
 
-    switch ($what) {
-      case PM1_DATE: $standard = 'Y-m-d'; break;
-      case PM1_DATETIME: $standard = 'Y-m-d H:i:s'; break;
-      case PM1_TIME: $standard = 'H:i:s'; break;
+      // check if legal
+      if ($instance !== false && $instance->format($v) == $data) {
+        return true;
+      }
     }
 
-    if (isset( $standard )) {
-
-      $instance = DateTime::createFromFormat(
-        $standard,
-        $data
-      );
-
-      return [
-        'success'=> false !== $instance && $instance->format($standard) == $data,
-        'declaration'=> $struct,
-        'depth'=> $depth,
-      ];
-    }
-
-    return [
-      'success'=> false,
-      'declaration'=> $struct,
-      'depth'=> $depth,
-    ];
+    return false;
   }
 
-  function check_value($struct, $data, $depth = []) : array {
+  function check_value($struct, $data, $depth = []) {
 
-    [
-      'definition'=> $definition,
-    ] = $struct;
-
-    switch ($definition) {
-
-      case PM1_ARRAY : return check_array($struct, $data, $depth);
-      case PM1_ENUMERATION : return check_enumeration($struct, $data, $depth);
-      case PM1_OBJECT : return check_object($struct, $data, $depth);
-      case PM1_REGULAR_EXPRESSION : return check_regular_expression($struct, $data, $depth);
-      case PM1_RANGE : return check_range($struct, $data, $depth);
-
-      case PM1_DATE:
-      case PM1_DATETIME:
-      case PM1_TIME:
-        return check_datetime($struct, $data, $depth);
+    switch ($struct) {
 
       case PM1_INT : $success = is_int($data); break;
       case PM1_DOUBLE : $success = is_double($data); break;
@@ -280,8 +233,31 @@ namespace GarryDzeng\PM1 {
       case PM1_STRING : $success = is_string($data); break;
       case PM1_BOOL : $success = is_bool($data); break;
 
+      case PM1_DATE: $success = check_datetime($data, ['Y-m-d']); break;
+      case PM1_DATETIME: $success = check_datetime($data, ['Y-m-d H:i:s', 'Y-m-d\TH:i:sP', 'Y-m-d\TH:i:sO']); break;
+      case PM1_TIME: $success = check_datetime($data, ['H:i:s']); break;
+
       default: {
-        $success = false;
+
+        [
+          'definition'=> $definition,
+        ] = $struct;
+
+        switch ($definition) {
+
+          case PM1_ARRAY : return check_array($struct, $data, $depth);
+          case PM1_ENUMERATION : return check_enumeration($struct, $data, $depth);
+          case PM1_OBJECT : return check_object($struct, $data, $depth);
+          case PM1_REGULAR_EXPRESSION : return check_regular_expression($struct, $data, $depth);
+          case PM1_RANGE : return check_range($struct, $data, $depth);
+
+          // This isn't filter exception,
+          // because we shouldn't determine real definition of structure,
+          // its argument exception
+          default: {
+            throw new InvalidArgumentException('');
+          }
+        }
       }
     }
 
@@ -297,21 +273,15 @@ namespace GarryDzeng\PM1 {
     [
       'success'=> $success,
       'declaration'=> $declaration,
-      'depth'=> $depth
+      'depth'=> $depth,
     ] = check_value(
       $notation,
       $data
     );
 
-    $error = 'Everything is OK';
-
-    if (!$success) {
-      $error = 'Value of property (or itself) "/'.implode('/', $depth).'" does not fulfill declaration : '.describe($declaration);
-    }
-
     return [
       'success'=> $success,
-      'error'=> $error,
+      'error'=> $success ? null : 'Value of property (or itself) "/'.implode('/', $depth).'" does not fulfill declaration : '.describe($declaration),
       'declaration'=> $declaration,
       'depth'=> $depth
     ];

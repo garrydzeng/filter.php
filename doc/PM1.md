@@ -3,7 +3,7 @@
 This format has 8 primitive types ...
 
 - `date` a string like "YYYY-MM-DD"
-- `datetime` a string like "YYYY-MM-DD HH:mm:ss"
+- `datetime` a string like "YYYY-MM-DD HH:mm:ss" (ISO-8601 supported)
 - `time` a string like "HH:mm:ss"
 - `int` integer value
 - `double` floating-point numbers

@@ -1,6 +1,8 @@
 <?php
 namespace GarryDzeng\PM1 {
 
+  use InvalidArgumentException;
+
   define('PM1_INT', 1);
   define('PM1_DOUBLE', 2);
   define('PM1_BOOL', 3);
@@ -14,6 +16,15 @@ namespace GarryDzeng\PM1 {
   define('PM1_DATE', 11);
   define('PM1_DATETIME', 12);
   define('PM1_TIME', 13);
+
+  function fault($index) {
+    throw new InvalidArgumentException(<<< Message
+      You have an error in your PM1 syntax, 
+      check the manual that corresponds to your library version for the right syntax to use, 
+      near offset <$index>.
+      Message
+    );
+  }
 
   function TokenStream(string $source) {
     return [
@@ -80,17 +91,18 @@ namespace GarryDzeng\PM1 {
     }
 
     // leading zero
-    if ('0' == $start && ($token = read($stream)) != null) {
+    if ('0' == $start && read($stream) != null) {
 
+      [
+        'token'=> $token,
+        'index'=> $index,
+      ] = $stream;
+
+      // leading zero should follow a dot character not another number
       if ('.' != $token) {
-        return [
-          'success'=> false,
-          'error'=> '
-            Illegal double found,
-            you should follow a dot character if it starts with zero,
-            please check.
-          '
-        ];
+        fault(
+          $index - 1
+        );
       }
 
       $start .= $token;
@@ -218,7 +230,7 @@ namespace GarryDzeng\PM1 {
       PM1_DATETIME => 'tetime',
       PM1_TIME => 'ime',
       PM1_INT => 'nt',
-      PM1_DOUBLE => 'ouble',
+      PM1_DOUBLE => 'uble',
       PM1_BOOL => 'ol',
       PM1_STRING => 'tring',
       PM1_BYTE => 'te'
@@ -226,29 +238,20 @@ namespace GarryDzeng\PM1 {
 
     $expected = $remaining[$keyword];
 
+    [
+      'index'=> $start,
+    ] = $stream;
+
     for (
       $index = 0, $length = strlen($expected);
       $index < $length;
       $index ++
     )
     {
-      // Simple error
-      if (read($stream) != $expected[ $index ]) {
-
-        [
-          'index'=> $start,
-        ] = $stream;
-
-        $start--;
-
-        return [
-          'success'=> false,
-          'error'=> <<<N
-            You have an error in your PM1 syntax, 
-            check the manual that corresponds to your library version for the right syntax to use, 
-            near offset <$start>.
-          N
-        ];
+      if ($expected[ $index ] != read($stream)) {
+        fault(
+          ($start + $index) - 1
+        );
       }
     }
 
@@ -259,46 +262,33 @@ namespace GarryDzeng\PM1 {
       $keyword == PM1_DOUBLE
     )
     {
-      $range = as_range($stream, PM1_DOUBLE == $keyword);
+      [
+        'minimal'=> $minimal,
+        'maximal'=> $maximal,
+      ] = as_range($stream, PM1_DOUBLE == $keyword);
 
       // Parse range successfully
-      if ( $range ) {
-
-        [
-          'success'=> $success,
-          'error'=> $error,
-          'range'=> [
-            'minimal'=> $minimal,
-            'maximal'=> $maximal
-          ]
-        ] = $range;
-
-        if ($success) {
-          return [
-            'success'=> $success,
-            'definition'=> PM1_RANGE,
-            'body'=> [
-              'keyword'=> $keyword,
-              'range'=> [
-                'minimal'=> $minimal,
-                'maximal'=> $maximal,
-              ]
-            ]
-          ];
-        }
-
+      // don't determined as range if minimal & maximal value are empty both
+      // just use keyword
+      if (
+        isset($minimal) ||
+        isset($maximal)
+      )
+      {
         return [
-          'success'=> $success,
-          'error'=> $error,
+          'definition'=> PM1_RANGE,
+          'body'=>  [
+            'keyword'=> $keyword,
+            'range'=> [
+              'minimal'=> $minimal,
+              'maximal'=> $maximal,
+            ]
+          ]
         ];
       }
     }
 
-    return [
-      'success'=> true,
-      'definition'=> $keyword,
-      'body'=> null
-    ];
+    return $keyword;
   }
 
   function as_range(array &$stream, $double = false) {
@@ -336,24 +326,16 @@ namespace GarryDzeng\PM1 {
     // range only contains minimal value if ">" character determined
     if ('>' == $token) {
       return [
-        'success'=> true,
-        'range'=> [
-          'minimal'=> $minimal,
-          'maximal'=> null
-        ]
+        'minimal'=> $minimal,
+        'maximal'=> null
       ];
     }
 
     // Expect "," delimiter before maximal value
     if (',' != $token) {
-      return [
-        'success'=> false,
-        'error'=> <<<N
-          You have an error in your PM1 syntax, 
-          check the manual that corresponds to your library version for the right syntax to use, 
-          near offset <$index>.
-        N
-      ];
+      fault(
+        $index
+      );
     }
 
     $maximal = $double ? as_double($stream) : as_int($stream);
@@ -364,22 +346,14 @@ namespace GarryDzeng\PM1 {
     ] = $stream;
 
     if ('>' != $token) {
-      return [
-        'success'=> false,
-        'error'=> <<<N
-          You have an error in your PM1 syntax, 
-          check the manual that corresponds to your library version for the right syntax to use, 
-          near offset <$index>.
-        N
-      ];
+      fault(
+        $index
+      );
     }
 
     return [
-      'success'=> true,
-      'range'=> [
-        'minimal'=> $minimal,
-        'maximal'=> $maximal
-      ]
+      'minimal'=> $minimal,
+      'maximal'=> $maximal
     ];
   }
 
@@ -412,16 +386,7 @@ namespace GarryDzeng\PM1 {
       }
     }
 
-    $index -= 1;
-
-    return [
-      'success'=> false,
-      'error'=> <<<N
-        You have an error in your PM1 syntax, 
-        check the manual that corresponds to your library version for the right syntax to use, 
-        near offset <$index>.
-      N
-    ];
+    fault($index - 1);
   }
 
   function as_object(array &$stream) {
@@ -442,24 +407,12 @@ namespace GarryDzeng\PM1 {
         // we determined a t of object so returns
         if ('}' == $token) {
           return [
-            'success'=> true,
             'definition'=> PM1_OBJECT,
             'body'=> $done
           ];
         }
-        else {
 
-          $index -= 1;
-
-          return [
-            'success'=> false,
-            'error'=> <<<N
-              You have an error in your PM1 syntax, 
-              check the manual that corresponds to your library version for the right syntax to use, 
-              near offset <$index>.
-            N
-          ];
-        }
+        fault($index - 1);
       }
 
       $optional = $token == '?';
@@ -479,43 +432,17 @@ namespace GarryDzeng\PM1 {
       // Peek current character
       // it should be colon because it delimits key & value
       if (':' != $token) {
-
-        $index -= 1;
-
-        return [
-          'success'=> false,
-          'error'=> <<<N
-            You have an error in your PM1 syntax, 
-            check the manual that corresponds to your library version for the right syntax to use, 
-            near offset <$index>.
-          N
-        ];
-      }
-
-      [
-        'success'=> $success,
-        'error'=> $error,
-        'definition'=> $definition,
-        'body'=> $body,
-      ] = as_value(
-        $stream
-      );
-
-      // Stop
-      if (!$success) {
-        return [
-          'success'=> $success,
-          'error'=> $error,
-        ];
+        fault(
+          $index - 1
+        );
       }
 
       $done[] = [
         'name'=> $name,
         'is_optional'=> $optional,
-        'value'=> [
-          'definition'=> $definition,
-          'body'=> $body,
-        ]
+        'value'=> as_value(
+          $stream
+        )
       ];
 
       // doesn't continue if we don't determine a delimiter
@@ -530,18 +457,12 @@ namespace GarryDzeng\PM1 {
     ] = $stream;
 
     if ('}' != $token) {
-      return [
-        'success'=> false,
-        'error'=> <<<N
-          You have an error in your PM1 syntax, 
-          check the manual that corresponds to your library version for the right syntax to use, 
-          near offset <$index>.
-        N
-      ];
+      fault(
+        $index
+      );
     }
 
     return [
-      'success'=> true,
       'definition'=> PM1_OBJECT,
       'body'=> $done
     ];
@@ -575,17 +496,9 @@ namespace GarryDzeng\PM1 {
         // Peek current character
         // it should be equal because it delimits key & value
         if ('=' != $token) {
-
-          $start -= 1;
-
-          return [
-            'success'=> false,
-            'error'=> <<<N
-              You have an error in your PM1 syntax, 
-              check the manual that corresponds to your library version for the right syntax to use, 
-              near offset <$start>.
-            N
-          ];
+          fault(
+            $start - 1
+          );
         }
       }
       else {
@@ -608,22 +521,12 @@ namespace GarryDzeng\PM1 {
         // we determine a Terminator of enumeration
         if (')' == $token) {
           return [
-            'success'=> true,
             'definition'=> PM1_ENUMERATION,
             'body'=> $done
           ];
         }
-        else {
-          $index -= 1;
-          return [
-            'success'=> false,
-            'error'=> <<<N
-              You have an error in your PM1 syntax, 
-              check the manual that corresponds to your library version for the right syntax to use, 
-              near offset <$index>.
-            N
-          ];
-        }
+
+        fault($index - 1);
       }
 
       $done[] = (int)$number;
@@ -648,18 +551,12 @@ namespace GarryDzeng\PM1 {
 
     // enumeration must end with ")" character
     if (')' != $token) {
-      return [
-        'success'=> false,
-        'error'=> <<<N
-          You have an error in your PM1 syntax, 
-          check the manual that corresponds to your library version for the right syntax to use, 
-          near offset <$index>.
-        N
-      ];
+      fault(
+        $index
+      );
     }
 
     return [
-      'success'=> true,
       'definition'=> PM1_ENUMERATION,
       'body'=> $done
     ];
@@ -676,14 +573,9 @@ namespace GarryDzeng\PM1 {
 
     // Every array must contain a primitive, enumeration or object
     if (']' == $token) {
-      $index -= 1;
       return [
-        'success'=> false,
-        'error'=> <<<N
-          You have an error in your PM1 syntax, 
-          check the manual that corresponds to your library version for the right syntax to use, 
-          near offset <$index>.
-        N
+        'definition'=> PM1_ARRAY,
+        'body'=> []
       ];
     }
 
@@ -698,21 +590,14 @@ namespace GarryDzeng\PM1 {
 
     // Array should enclosed by "]" character
     if (']' != $token) {
-      $index -= 1;
-      return [
-        'success'=> false,
-        'error'=> <<<N
-          You have an error in your PM1 syntax, 
-          check the manual that corresponds to your library version for the right syntax to use, 
-          near offset <$index>.
-        N
-      ];
+      fault(
+        $index - 1
+      );
     }
 
     return [
-      'success'=> true,
       'definition'=> PM1_ARRAY,
-      'body'=> $item,
+      'body'=> $item
     ];
   }
 
@@ -720,6 +605,7 @@ namespace GarryDzeng\PM1 {
 
     $pattern = null;
 
+    //
     while (($token = read($stream, true, $previous)) != null && ('/' != $token || '\\' == $previous)) {
       $pattern .= $token;
     }
@@ -731,16 +617,7 @@ namespace GarryDzeng\PM1 {
         'index'=> $index,
       ] = $stream;
 
-      $index -= 1;
-
-      return [
-        'success'=> false,
-        'error'=> <<<N
-          You have an error in your PM1 syntax, 
-          check the manual that corresponds to your library version for the right syntax to use, 
-          near offset <$index>.
-        N
-      ];
+      fault($index - 1);
     }
 
     $global = false;
@@ -783,7 +660,6 @@ namespace GarryDzeng\PM1 {
     }
 
     return [
-      'success'=> true,
       'definition'=> PM1_REGULAR_EXPRESSION,
       'body'=> [
         'pattern'=> $pattern,

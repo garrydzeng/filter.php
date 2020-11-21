@@ -13,23 +13,25 @@ namespace GarryDzeng\PM1 {
       'name'=> $name,
     ])
     {
-      $pieces[] = ($optional ? "$name?: " : "$name: ").describe($value);
+      $pieces[] = ($optional ? "$name?:" : "$name:").describe($value);
     }
 
-    return '{ '
-      .implode(', ', $pieces).
-    ' }';
+    return '{'
+      .implode(',', $pieces).
+    '}';
   }
 
   function print_enumeration($struct) {
-    return '('
-      .implode(',', $struct).
-    ')';
+    return sprintf('(%s)', implode(',', $struct));
   }
 
   function print_array($struct) {
 
     switch ($struct) {
+
+      case PM1_DATE: return '[date]';
+      case PM1_DATETIME: return '[datetime]';
+      case PM1_TIME: return '[time]';
 
       case PM1_INT: return '[int]';
       case PM1_DOUBLE: return '[double]';
@@ -40,22 +42,15 @@ namespace GarryDzeng\PM1 {
       default: {
 
         [
-          'definition'=> $what,
+          'definition'=> $definition,
           'body'=> $body,
         ] = $struct;
 
-        switch ($what) {
-
-          case PM1_ENUMERATION: return print_enumeration($body);
-          case PM1_OBJECT: return print_object($body);
-
+        switch ($definition) {
+          case PM1_ENUMERATION: return '['.print_enumeration($body).']';
+          case PM1_OBJECT: return '['.print_object($body).']';
           default: {
-            throw new InvalidArgumentException(<<<Message
-              Invalid notation found,
-              An array must contain a primitive type, enumeration or object, 
-              please check.
-              Message
-            );
+            return '[]';
           }
         }
       }
@@ -99,8 +94,9 @@ namespace GarryDzeng\PM1 {
       case PM1_DOUBLE: $keyword = 'double'; break;
 
       default: {
-        throw new InvalidArgumentException(
+        throw new InvalidArgumentException(<<<Message
 
+          Message
         );
       }
     }
@@ -110,12 +106,7 @@ namespace GarryDzeng\PM1 {
 
   function describe($struct) {
 
-    [
-      'definition'=> $definition,
-      'body'=> $body,
-    ] = $struct;
-
-    switch ($definition) {
+    switch ($struct) {
 
       case PM1_DATE: return 'date';
       case PM1_DATETIME: return 'datetime';
@@ -127,18 +118,29 @@ namespace GarryDzeng\PM1 {
       case PM1_STRING: return 'string';
       case PM1_BOOL: return 'bool';
 
-      case PM1_ARRAY: return print_array($body);
-      case PM1_ENUMERATION: return print_enumeration($body);
-      case PM1_OBJECT: return print_object($body);
-      case PM1_REGULAR_EXPRESSION: return print_regular_expression($body);
-      case PM1_RANGE: return print_range($body);
-
       default: {
-        throw new InvalidArgumentException(<<<Message
-          Invalid notation found,
-          please check.
-          Message
-        );
+
+        [
+          'definition'=> $definition,
+          'body'=> $body,
+        ] = $struct;
+
+        switch ($definition) {
+
+          case PM1_ARRAY: return print_array($body);
+          case PM1_ENUMERATION: return print_enumeration($body);
+          case PM1_OBJECT: return print_object($body);
+          case PM1_REGULAR_EXPRESSION: return print_regular_expression($body);
+          case PM1_RANGE: return print_range($body);
+
+          default: {
+            throw new InvalidArgumentException(<<<Message
+              Invalid notation found,
+              please check.
+              Message
+            );
+          }
+        }
       }
     }
   }

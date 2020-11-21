@@ -1,0 +1,17 @@
+{
+  id: int<1>,
+  account_balance: double,
+  tags: [string],
+  created_datetime: datetime,
+  category: (
+    savings = 1,
+    recurring_deposit = 2,
+    demat = 3,
+    0
+  ),
+  plan?: {
+    space: int<1>,
+    private_repos: int,
+    name: string,
+  }
+}

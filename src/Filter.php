@@ -38,20 +38,16 @@ namespace GarryDzeng\Filter {
         ;
       }
 
-      $struct = parse(file_get_contents($pathname));
-
-      [
-        'success'=> $success,
-        'error'=> $error,
-      ] = $struct;
-
       /*
        * Syntax error can avoid by manual in advance,
        * report by exception
        * for safety
        */
-      if (!$success) {
-        throw new RuntimeException("Incorrect or empty Notation found: ". ($error ?? '∅'));
+      try {
+        $struct = parse(file_get_contents($pathname));
+      }
+      catch (InvalidArgumentException $exception) {
+        throw new RuntimeException("Incorrect or empty Notation found: ". ($exception->getMessage() ?? '∅'));
       }
 
       // ensure directory
