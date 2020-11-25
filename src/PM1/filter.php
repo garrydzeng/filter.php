@@ -122,7 +122,7 @@ namespace GarryDzeng\PM1 {
       if (!$success) {
         return [
           'success'=> false,
-          'declaration'=> $declaration ?? [],
+          'declaration'=> $declaration ?? $struct,
           'depth'=> $extra
         ];
       }
