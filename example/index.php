@@ -3,7 +3,7 @@ require '../vendor/autoload.php';
 
 $input = [
   'id'=> 1,
-  'account_balance'=> 192.23,
+  'account_balance'=> -1,
   'category'=> 0,
   'created_datetime'=> '2020-11-21T06:55:13+00:00',
   'tags'=> [

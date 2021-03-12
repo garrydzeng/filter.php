@@ -1,6 +1,6 @@
 {
   id: int<1>,
-  account_balance: double,
+  account_balance: double<0>,
   tags: [string],
   created_datetime: datetime,
   category: (

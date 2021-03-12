@@ -92,7 +92,7 @@ namespace GarryDzeng\PM1 {
       switch ($element) {
 
         case PM1_INT: $success = is_int($value); break;
-        case PM1_DOUBLE: $success = is_double($value); break;
+        case PM1_DOUBLE: $success = is_double($value) || is_int($value); break;
         case PM1_BYTE: $success = is_int($value) && ($value >= 0 && $value <= 255); break;
         case PM1_STRING: $success = is_string($value); break;
         case PM1_BOOL: $success = is_bool($value); break;
@@ -228,7 +228,7 @@ namespace GarryDzeng\PM1 {
     switch ($struct) {
 
       case PM1_INT : $success = is_int($data); break;
-      case PM1_DOUBLE : $success = is_double($data); break;
+      case PM1_DOUBLE : $success = is_double($data) || is_int($data); break;
       case PM1_BYTE : $success = is_int($data) && ($data >= 0 && $data <= 255); break;
       case PM1_STRING : $success = is_string($data); break;
       case PM1_BOOL : $success = is_bool($data); break;

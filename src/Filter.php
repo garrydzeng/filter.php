@@ -71,13 +71,16 @@ namespace GarryDzeng\Filter {
      */
     public function filter($pathname, $data) {
 
+      // Abstract syntax tree is integer or associative array not string or others ...
+      $resolvable = is_string($pathname);
+
       [
         'success'=> $success,
         'error'=> $error,
         'declaration'=> $declaration,
         'depth'=> $depth
       ] = filter(
-        $this->resolve($pathname),
+        $resolvable ? $this->resolve($pathname) : $pathname,
         $data
       );
 

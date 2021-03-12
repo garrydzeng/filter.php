@@ -1,0 +1,105 @@
+<?php
+return array (
+  'definition' => 6,
+  'body' => 
+  array (
+    0 => 
+    array (
+      'name' => 'id',
+      'is_optional' => false,
+      'value' => 
+      array (
+        'definition' => 9,
+        'body' => 
+        array (
+          'keyword' => 1,
+          'range' => 
+          array (
+            'minimal' => 1,
+            'maximal' => NULL,
+          ),
+        ),
+      ),
+    ),
+    1 => 
+    array (
+      'name' => 'account_balance',
+      'is_optional' => false,
+      'value' => 2,
+    ),
+    2 => 
+    array (
+      'name' => 'tags',
+      'is_optional' => false,
+      'value' => 
+      array (
+        'definition' => 8,
+        'body' => 4,
+      ),
+    ),
+    3 => 
+    array (
+      'name' => 'created_datetime',
+      'is_optional' => false,
+      'value' => 12,
+    ),
+    4 => 
+    array (
+      'name' => 'category',
+      'is_optional' => false,
+      'value' => 
+      array (
+        'definition' => 7,
+        'body' => 
+        array (
+          0 => 1,
+          1 => 2,
+          2 => 3,
+          3 => 0,
+        ),
+      ),
+    ),
+    5 => 
+    array (
+      'name' => 'plan',
+      'is_optional' => true,
+      'value' => 
+      array (
+        'definition' => 6,
+        'body' => 
+        array (
+          0 => 
+          array (
+            'name' => 'space',
+            'is_optional' => false,
+            'value' => 
+            array (
+              'definition' => 9,
+              'body' => 
+              array (
+                'keyword' => 1,
+                'range' => 
+                array (
+                  'minimal' => 1,
+                  'maximal' => NULL,
+                ),
+              ),
+            ),
+          ),
+          1 => 
+          array (
+            'name' => 'private_repos',
+            'is_optional' => false,
+            'value' => 1,
+          ),
+          2 => 
+          array (
+            'name' => 'name',
+            'is_optional' => false,
+            'value' => 4,
+          ),
+        ),
+      ),
+    ),
+  ),
+);

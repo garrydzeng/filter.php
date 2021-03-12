@@ -20,5 +20,11 @@ namespace GarryDzeng\PM1 {
         )
       );
     }
+
+    public function testFilter() {
+
+
+
+    }
   }
 }
