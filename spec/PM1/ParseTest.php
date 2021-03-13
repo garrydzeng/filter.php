@@ -16,57 +16,7 @@ namespace GarryDzeng\PM1 {
     }
 
     public function testCleanComment() {
-
-      $this->assertEquals(
-        <<<Except
-        
-        {
-          id: int<1>,
-          openid: /^[\da-f]{32}$/im,
-          sn: int,
-          describe_as?: [string],
-          plan: {
-             space: int<1>,
-             private_repos: int<0>,
-             name: string,
-          },
-          type: (
-            company = 1,
-            business_unit = 2,
-            unit = 3,
-            center = 4,
-            team = 5,
-            0,
-          ),
-        }
-        Except,
-        clear(<<<Source
-          /*
-           * main definition
-           */
-          {
-            // means identifier
-            id: int<1>,
-            openid: /^[\da-f]{32}$/im,
-            sn: int,
-            describe_as?: [string],
-            plan: {
-               space: int<1>,
-               private_repos: int<0>,
-               name: string,
-            },
-            type: (
-              company = 1,
-              business_unit = 2,
-              unit = 3,
-              center = 4,
-              team = 5,
-              0,
-            ),
-          }
-          Source
-        )
-      );
+      $this->assertEquals("\r\n{\r\n  id: int<1>,\r\n  openid: /^[\da-f]{32}$/im,\r\n}", clear("/*\r\n* main definition\r\n */\r\n{\r\n  id: int<1>,\r\n  // means identifier\r\nopenid: /^[\da-f]{32}$/im,\r\n}"));
     }
 
     public function testParse() {
@@ -91,10 +41,6 @@ namespace GarryDzeng\PM1 {
       $this->assertEquals(['definition'=> PM1_RANGE,'body'=> ['keyword'=> PM1_DOUBLE,'range'=> ['minimal'=> null,'maximal'=> 9]]], parse('double<,9>'));
 
       $this->assertEquals(['definition'=> PM1_REGULAR_EXPRESSION,'body'=> ['pattern'=> '^s: \\\d+','flag'=> ['global'=> false,'case_insensitive'=> true,'multi'=> false]]], parse('/^s: \\\d+/i'));
-
-      // discard comment
-      $this->assertEquals(['definition'=> PM1_OBJECT,'body'=> []], parse("// object \r\n{}"));
-      $this->assertEquals(['definition'=> PM1_OBJECT,'body'=> []], parse("// object"));
 
       $this->assertEquals(['definition'=> PM1_OBJECT,'body'=> []], parse('{}'));
       $this->assertEquals(['definition'=> PM1_ENUMERATION, 'body'=> []], parse('()'));

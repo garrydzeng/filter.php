@@ -55,7 +55,7 @@ namespace GarryDzeng\PM1 {
             // Test with difference terminator
             if ($isBlockComment ? ($source[$index] === '*' && $source[$index + 1] === '/') : $source[$index] === "\n") {
               $done = true;
-              $range[] = $index + 2;
+              $range[] = $index + ($isBlockComment ? 2 : 1);
               break;
             }
           }
